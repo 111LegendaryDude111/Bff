@@ -1,10 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
+
+/*
+  Страницы:
+      1) авторизация
+      2) посты
+      3) детальная карточка поста
+      4) профиль (личный кабинет )
+
+  Если 401 ответ с сервера перекидываем на авторизацию
+
+
+
+*/
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/posts", {
+      headers: {
+        "Access-Control-Allow-Origin": "no-cors",
+      },
+    }).then((el) => console.log({ el }));
+  }, []);
 
   return (
     <>
@@ -29,7 +50,7 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
