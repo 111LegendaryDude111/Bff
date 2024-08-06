@@ -1,9 +1,22 @@
-// const express = require("express");
 import express, { response } from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { Profile } from "./types";
+
 const app = express();
 const port = 3000;
-
 /*
+
+
+  Правки
+
+- для корсов юзать отдельный пакет cors
+- добавить проверку на токен и придумать как его инвалидировать (можно через application вкладку)
+- авторизация делается через куки
+- добавить обработку ошибок
+- туду пагинация
+
+
 
 
 
@@ -11,18 +24,7 @@ const port = 3000;
     Обновление токене. 
     В случае ошибки кидаем 401 на фронт
   
-  
-  
-    - Вспомогательные ендпоинты под каждую страницу:
-
-
-    1) авторизация
-    2) посты
-    3) детальная карточка поста
-    4) профиль (личный кабинет )
-
-
-
+`
 
 
   Апи:
@@ -36,18 +38,25 @@ const port = 3000;
         тут берем посты/юзеры/тудушки
 */
 
-// В начале вашего приложения Express
-// app.use((req, res: express.Response, next) => {
+interface DB {
+  accessToken: string | null;
+  refreshToken: string | null;
+}
 
-// });
+const db: DB = {
+  accessToken: null,
+  refreshToken: null,
+};
 
 const jsonMiddleware = express.json();
 
+app.use(cors());
 app.use(jsonMiddleware);
+app.use(cookieParser());
 
 // Маршрут для главной страницы
 app.get("/", (req, res: express.Response) => {
-  res.send("Hello World!");
+  res.send("Hello");
 });
 
 // Запуск сервера
@@ -57,11 +66,37 @@ app.listen(port, () => {
 
 // list of posts
 app.get("/posts", async (req, res: express.Response) => {
+  const headers = req.headers;
+  const cookie = headers.cookie;
+  console.log({ headers });
+
   const posts = await getDataFromFetch(
     "https://jsonplaceholder.typicode.com/posts"
   );
 
-  res.status(200).json(posts);
+  // if (!cookie) {
+  //   /*  
+  //     Проверить есть ли рефреш токен:
+  //       1) Если есть то обновить пару токенов и отправить посты
+  //       2) Если нет то перекинуть на логин
+
+
+
+
+  //   */ 
+
+
+
+  //   return;
+  // }
+
+  res
+    .cookie("ACCESS_TOKEN", db.accessToken, {
+      maxAge: 60 * 60 * 24 * 7, // 1 неделя
+      httpOnly: true,
+    })
+    .status(200)
+    .json(posts);
 });
 
 // current post
@@ -71,7 +106,7 @@ app.get("/posts/:id", async (req, res: express.Response) => {
   );
 
   // console.log(req.params.id);
-  console.log({ id: req.query?.userId });
+  // console.log({ id: req.query?.userId });
 
   res.status(200).json(post);
 });
@@ -159,9 +194,15 @@ app.post("/login", async (req, res: express.Response) => {
         expiresInMins: 30,
       }),
     });
-    const data = await response.json();
+    const data = (await response.json()) as Profile; // !! Обсудить
 
-    if (response.ok) {
+    const isSuccess =
+      typeGuard(data?.token, data) && typeGuard(data?.refreshToken, data);
+
+    if (response.ok && isSuccess) {
+      db.accessToken = data.token;
+      db.refreshToken = data.refreshToken;
+
       res.status(200).json(data);
     } else {
       res.status(401).json(data);
@@ -184,3 +225,20 @@ async function getDataFromFetch(url: string) {
 
   return result;
 }
+
+function typeGuard<Field extends string, Object extends {}>(
+  field: Field,
+  obj: Object
+) {
+  return field in obj;
+}
+
+
+
+
+/*
+
+  Проблемс 
+    почему-то при отправке запросов с фронта не записываются куки на клиент, только если с локалхост 3000
+
+*/
