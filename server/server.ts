@@ -1,56 +1,21 @@
-import express, { response } from "express";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { Profile } from "./types";
+import { Post, Profile, Tokens } from "./types";
+import { getDataFromFetch, sendData, typeGuard } from "./helpers";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
 
 const app = express();
 const port = 3000;
-/*
-
-
-  Правки
-
-- для корсов юзать отдельный пакет cors
-- добавить проверку на токен и придумать как его инвалидировать (можно через application вкладку)
-- авторизация делается через куки
-- добавить обработку ошибок
-- туду пагинация
-
-
-
-
-
-  - Логика выставления аксесс и рефреш токена. 
-    Обновление токене. 
-    В случае ошибки кидаем 401 на фронт
-  
-`
-
-
-  Апи:
-- https://dummyjson.com/docs/auth —
-
-    тут только авторизацию берем (он сам возвращает юзера с id 1 при авторизации, 
-      поэтому в целом пофиг, матчится будет с jsonplaceholder хахах). 
-
-- https://jsonplaceholder.typicode.com/ — 
-
-        тут берем посты/юзеры/тудушки
-*/
-
-interface DB {
-  accessToken: string | null;
-  refreshToken: string | null;
-}
-
-const db: DB = {
-  accessToken: null,
-  refreshToken: null,
-};
 
 const jsonMiddleware = express.json();
 
-app.use(cors());
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(jsonMiddleware);
 app.use(cookieParser());
 
@@ -64,75 +29,122 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
+app.get("/set-cookie", (req, res) => {
+  res.cookie("myCookie", "cookieValue", {
+    httpOnly: true,
+    sameSite: "none",
+    secure: false,
+  });
+
+  const cookie = req.cookies;
+  const headers = req.headers.cookie;
+
+  // console.log({ cookie, headers });
+
+  res
+    .cookie(ACCESS_TOKEN, ACCESS_TOKEN, {
+      // maxAge: 60 * 60 * 24 * 7, // 1 неделя
+      maxAge: 6_000, // 1 неделя
+      httpOnly: true,
+      secure: false,
+    })
+    .cookie(REFRESH_TOKEN, REFRESH_TOKEN, {
+      // maxAge: 60 * 60 * 24 * 7, // 1 неделя
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: false,
+    })
+    .status(200);
+
+  res.send("Cookie has been set");
+});
+
 // list of posts
 app.get("/posts", async (req, res: express.Response) => {
-  const headers = req.headers;
-  const cookie = headers.cookie;
-  console.log({ headers });
+  const { cookies } = req;
 
   const posts = await getDataFromFetch(
     "https://jsonplaceholder.typicode.com/posts"
   );
 
-  // if (!cookie) {
-  //   /*  
-  //     Проверить есть ли рефреш токен:
-  //       1) Если есть то обновить пару токенов и отправить посты
-  //       2) Если нет то перекинуть на логин
-
-
-
-
-  //   */ 
-
-
-
-  //   return;
-  // }
-
-  res
-    .cookie("ACCESS_TOKEN", db.accessToken, {
-      maxAge: 60 * 60 * 24 * 7, // 1 неделя
-      httpOnly: true,
-    })
-    .status(200)
-    .json(posts);
+  sendData<Post[]>({ data: posts as Post[], res, cookies });
 });
 
 // current post
 app.get("/posts/:id", async (req, res: express.Response) => {
+  const { params, cookies } = req;
   const post = await getDataFromFetch(
-    `https://jsonplaceholder.typicode.com/posts/${req.params.id}`
+    `https://jsonplaceholder.typicode.com/posts/${params.id}`
   );
 
-  // console.log(req.params.id);
-  // console.log({ id: req.query?.userId });
-
-  res.status(200).json(post);
+  sendData<Post>({ data: post as Post, res, cookies });
 });
 
-interface Post {
-  userId: number;
-  id: number;
-  title: string;
-  body: string;
-}
-
+// get user by id
 app.get("/usersPosts/:userId", async (req, res: express.Response) => {
+  const { params, cookies } = req;
+
   const allPost: Post[] = (await getDataFromFetch(
     `https://jsonplaceholder.typicode.com/posts/`
   )) as Post[];
 
   const usersList = allPost.filter((el) => {
-    const userIdFromQuery = parseInt(req.params.userId);
+    const userIdFromQuery = parseInt(params.userId);
 
     return el.userId === userIdFromQuery;
   });
 
-  res.status(200).json(usersList);
+  sendData<Post[]>({ data: usersList as Post[], res, cookies });
 });
 
 // Aвторизация
+app.post("/login", async (req, res: express.Response) => {
+  const { username, password } = req.body;
+
+  const response = await fetch("https://dummyjson.com/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      password,
+      expiresInMins: 30,
+    }),
+  });
+
+  if (!response.ok) {
+    res.status(response.status).json(JSON.stringify(response.statusText));
+    return;
+  }
+
+  const data = (await response.json()) as Profile;
+
+  const isSuccess = typeGuard("token", data) && typeGuard("refreshToken", data);
+
+  if (isSuccess) {
+    res
+      .cookie(ACCESS_TOKEN, data.token, {
+        maxAge: 6_000,
+        httpOnly: true,
+        secure: false,
+      })
+      .cookie(REFRESH_TOKEN, data.refreshToken, {
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: false,
+      })
+      .status(200)
+      .json(data);
+
+    return;
+  }
+
+  res.status(401).json(data);
+});
+
+/*
+     username: 'emilys',
+    password: 'emilyspass',
+*/
 
 /*
 
@@ -178,67 +190,5 @@ fetch('https://dummyjson.com/auth/refresh', {
         optional, defaults to 60
     })
 }).then(res=>res.json()).then(console.log);
-
-*/
-
-app.post("/login", async (req, res: express.Response) => {
-  const { username, password } = req.body;
-
-  try {
-    const response = await fetch("https://dummyjson.com/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username,
-        password,
-        expiresInMins: 30,
-      }),
-    });
-    const data = (await response.json()) as Profile; // !! Обсудить
-
-    const isSuccess =
-      typeGuard(data?.token, data) && typeGuard(data?.refreshToken, data);
-
-    if (response.ok && isSuccess) {
-      db.accessToken = data.token;
-      db.refreshToken = data.refreshToken;
-
-      res.status(200).json(data);
-    } else {
-      res.status(401).json(data);
-    }
-  } catch (err) {
-    res.status(500).json({ message: "Ошибка сервера", err });
-  }
-});
-
-async function getDataFromFetch(url: string) {
-  let result: unknown | Error;
-
-  try {
-    const response = await fetch(url);
-
-    result = response.json();
-  } catch (err) {
-    result = err;
-  }
-
-  return result;
-}
-
-function typeGuard<Field extends string, Object extends {}>(
-  field: Field,
-  obj: Object
-) {
-  return field in obj;
-}
-
-
-
-
-/*
-
-  Проблемс 
-    почему-то при отправке запросов с фронта не записываются куки на клиент, только если с локалхост 3000
 
 */

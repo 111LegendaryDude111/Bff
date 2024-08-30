@@ -12,7 +12,6 @@ const router = createBrowserRouter([
         <App />
       </div>
     ),
-    // element: <SignIn />,
   },
   {
     path: "/login",
