@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
 import { Profile } from "./types";
@@ -9,16 +8,12 @@ import { Profile } from "./types";
       3) детальная карточка поста
       4) профиль (личный кабинет )
 
-  Если 401 ответ с сервера перекидываем на авторизацию
-
-
-
 */
 
 function App() {
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const getPosts = async () => {
     const userFromLs = localStorage.getItem("user");
 
     if (!userFromLs) {
@@ -29,15 +24,72 @@ function App() {
 
     const user: Profile = JSON.parse(userFromLs);
 
-    fetch("http://localhost:3000/posts", {
+    const res = await fetch("http://localhost:3000/posts", {
       headers: {
         accessToken: user.token,
         refreshToken: user.refreshToken,
       },
-    }).then((el) => console.log({ el }));
-  }, [navigate]);
+      credentials: "include",
+    });
 
-  return <div>This Main App</div>;
+    if (res.status > 300) {
+      navigate("/login");
+      return;
+    }
+
+    const data = await res.json();
+
+    console.log(data);
+  };
+
+  const setCookie = () => {
+    fetch("http://localhost:3000/set-cookie", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => console.log(response.data))
+      .catch((error) => console.error("Error:", error));
+  };
+
+  const getCurrentPost = async () => {
+    const userFromLs = localStorage.getItem("user");
+
+    if (!userFromLs) {
+      navigate("/login");
+
+      return;
+    }
+
+    const user: Profile = JSON.parse(userFromLs);
+
+    const res = await fetch(`http://localhost:3000/posts/${5}`, {
+      headers: {
+        accessToken: user.token,
+        refreshToken: user.refreshToken,
+      },
+      credentials: "include",
+    });
+
+    if (res.status > 300) {
+      navigate("/login");
+      return;
+    }
+
+    const data = await res.json();
+
+    console.log(data);
+  };
+
+  return (
+    <div>
+      This Main App
+      <div>
+        <button onClick={setCookie}>Set Cookie</button>
+        <button onClick={getPosts}>getPosts</button>
+        <button onClick={getCurrentPost}>getCurrentPost</button>
+      </div>
+    </div>
+  );
 }
 
 export default App;

@@ -3,8 +3,6 @@ import styles from "./styles.module.css";
 import { useNavigate } from "react-router-dom";
 import { Profile } from "../../types";
 
-
-
 export const SignIn = () => {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +25,7 @@ export const SignIn = () => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ username: login, password }),
       signal: props,
     })
@@ -44,7 +43,7 @@ export const SignIn = () => {
 
         localStorage.setItem("user", JSON.stringify(data));
 
-        navigate('/')
+        navigate("/");
       })
       .catch((err) => {
         setError(err.message);
