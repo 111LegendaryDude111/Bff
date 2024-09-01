@@ -1,6 +1,7 @@
 import "./App.css";
 import { useNavigate } from "react-router-dom";
 import { Profile } from "./types";
+import { PostsList } from "./widgets/Posts/Posts";
 /*
   Страницы:
       1) авторизация
@@ -81,13 +82,14 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col bg-lime-200 justify-center h-screen w-full">
       This Main App
       <div>
         <button onClick={setCookie}>Set Cookie</button>
         <button onClick={getPosts}>getPosts</button>
         <button onClick={getCurrentPost}>getCurrentPost</button>
       </div>
+      <PostsList />
     </div>
   );
 }
