@@ -82,9 +82,9 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col bg-lime-200 justify-center h-screen w-full">
+    <div className="flex flex-col justify-center w-full">
       This Main App
-      <div>
+      <div className="flex justify-center gap-10">
         <button onClick={setCookie}>Set Cookie</button>
         <button onClick={getPosts}>getPosts</button>
         <button onClick={getCurrentPost}>getCurrentPost</button>

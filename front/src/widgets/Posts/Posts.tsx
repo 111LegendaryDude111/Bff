@@ -50,7 +50,7 @@ export const PostsList = () => {
   return (
     <>
       <h1>Posts</h1>
-      <div className="flex flex-col overflow-scroll p-5 gap-4">
+      <div className="flex flex-col  p-5 gap-4">
         {posts.map((p) => {
           return (
             <div
