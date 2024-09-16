@@ -63,38 +63,41 @@ app.get("/set-cookie", (req, res) => {
 app.get("/posts", async (req, res: express.Response) => {
   const { cookies } = req;
 
-  const posts = await getDataFromFetch(
-    "https://jsonplaceholder.typicode.com/posts"
-  );
+  const getPosts = async () =>
+    await getDataFromFetch("https://jsonplaceholder.typicode.com/posts");
 
-  sendData<Post[]>({ data: posts as Post[], res, cookies });
+  sendData<Post[]>({
+    getData: getPosts as () => Promise<Post[]>,
+    res,
+    cookies,
+  });
 });
 
 // current post
 app.get("/posts/:id", async (req, res: express.Response) => {
   const { params, cookies } = req;
-  const post = await getDataFromFetch(
-    `https://jsonplaceholder.typicode.com/posts/${params.id}`
-  );
+  const getPost = async () =>
+    await getDataFromFetch(
+      `https://jsonplaceholder.typicode.com/posts/${params.id}`
+    );
 
-  sendData<Post>({ data: post as Post, res, cookies });
+  sendData<Post>({ getData: getPost as () => Promise<Post>, res, cookies });
 });
 
 // get user by id
 app.get("/usersPosts/:userId", async (req, res: express.Response) => {
   const { params, cookies } = req;
 
-  const allPost: Post[] = (await getDataFromFetch(
-    `https://jsonplaceholder.typicode.com/posts/`
-  )) as Post[];
+  const getAllPost = async () =>
+    await getDataFromFetch(
+      `https://jsonplaceholder.typicode.com/posts?userId=${params.userId}`
+    );
 
-  const usersList = allPost.filter((el) => {
-    const userIdFromQuery = parseInt(params.userId);
-
-    return el.userId === userIdFromQuery;
+  sendData<Post[]>({
+    getData: getAllPost as () => Promise<Post[]>,
+    res,
+    cookies,
   });
-
-  sendData<Post[]>({ data: usersList as Post[], res, cookies });
 });
 
 // Aвторизация

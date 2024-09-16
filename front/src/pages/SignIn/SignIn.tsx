@@ -8,7 +8,6 @@ export const SignIn = () => {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState(null);
-  const [data, setData] = useState<Profile | null>(null);
   const navigate = useNavigate();
 
   /*
@@ -38,8 +37,6 @@ export const SignIn = () => {
       })
       .then((data: Profile) => {
         console.log(" success =====>", { data });
-
-        setData(data);
 
         localStorage.setItem("user", JSON.stringify(data));
 

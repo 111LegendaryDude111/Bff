@@ -22,7 +22,7 @@ function typeGuard<Field extends string, Object extends {}>(
   return field in obj;
 }
 
-async function refetchToken<T>({ cookies, data, res }: RefetchTokenParams<T>) {
+async function refetchToken<T>({ cookies, res }: RefetchTokenParams) {
   const shouldRedirectToLoginPage = !("REFRESH_TOKEN" in cookies);
 
   if (shouldRedirectToLoginPage) {
@@ -43,44 +43,47 @@ async function refetchToken<T>({ cookies, data, res }: RefetchTokenParams<T>) {
 
   const newTokens = (await response.json()) as Tokens;
 
-  res
-    .cookie(ACCESS_TOKEN, newTokens.token, {
-      maxAge: 6_000,
-      httpOnly: true,
-      secure: false,
-    })
-    .cookie(REFRESH_TOKEN, newTokens.refreshToken, {
-      maxAge: 60 * 60 * 24 * 7,
-      httpOnly: true,
-      secure: false,
-    })
-    .status(200)
-    .json(data);
+  return {
+    refreshToken: newTokens.refreshToken,
+    acessToken: newTokens.token,
+  };
 }
 
 async function sendData<Data>(params: SendDataParams<Data>) {
-  const { cookies, data, res } = params;
+  const { cookies, getData, res } = params;
 
   const isAuthorize = cookies && "ACCESS_TOKEN" in cookies;
 
+  let access_token = cookies.ACCESS_TOKEN;
+  let refresh_token = cookies.REFRESH_TOKEN;
+
   if (!isAuthorize) {
-    refetchToken<Data>({ data, res, cookies });
-    return;
+    const newPairOfTokens = await refetchToken({
+      res,
+      cookies,
+    });
+
+    if (newPairOfTokens) {
+      access_token = newPairOfTokens.acessToken;
+      refresh_token = newPairOfTokens.refreshToken;
+    }
   }
 
+  const json = await getData();
+
   res
-    .cookie(ACCESS_TOKEN, cookies.ACCESS_TOKEN, {
+    .cookie(ACCESS_TOKEN, access_token, {
       maxAge: 6_000,
       httpOnly: true,
       secure: false,
     })
-    .cookie(REFRESH_TOKEN, cookies.REFRESH_TOKEN, {
+    .cookie(REFRESH_TOKEN, refresh_token, {
       maxAge: 60 * 60 * 24 * 7, // 1 неделя
       httpOnly: true,
       secure: false,
     })
     .status(200)
-    .json(data);
+    .json(json);
 }
 
 export { refetchToken, sendData, typeGuard, getDataFromFetch };

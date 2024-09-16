@@ -89,6 +89,7 @@ function App() {
         <button onClick={getPosts}>getPosts</button>
         <button onClick={getCurrentPost}>getCurrentPost</button>
       </div>
+      <hr />
       <PostsList />
     </div>
   );

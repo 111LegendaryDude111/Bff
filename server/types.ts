@@ -24,15 +24,14 @@ interface Tokens {
   refreshToken: string;
 }
 
-interface RefetchTokenParams<T> {
+interface RefetchTokenParams {
   cookies: any;
-  data: T;
   res: Response<any, Record<string, any>>;
 }
 
 interface SendDataParams<Data> {
   cookies: any;
-  data: Data;
+  getData: () => Promise<Data>;
   res: Response<any, Record<string, any>>;
 }
 
