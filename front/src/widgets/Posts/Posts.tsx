@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { Profile } from "../../types";
-import { useNavigate } from "react-router-dom";
 
 interface Post {
   body: string;
@@ -10,42 +8,19 @@ interface Post {
 }
 
 export const PostsList = () => {
-  const navigate = useNavigate();
-
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    const userFromLs = localStorage.getItem("user");
-
-    if (!userFromLs) {
-      navigate("/login");
-
-      return;
-    }
-
-    const user: Profile = JSON.parse(userFromLs);
-
     fetch("http://localhost:3000/posts", {
-      headers: {
-        accessToken: user.token,
-        refreshToken: user.refreshToken,
-      },
       credentials: "include",
     })
-      .then((res) => {
-        if (res.status > 300) {
-          navigate("/login");
-          return;
-        }
-
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
         console.log({ data });
 
         setPosts(data);
       });
-  }, [navigate]);
+  }, []);
 
   return (
     <>

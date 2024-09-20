@@ -1,5 +1,10 @@
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
-import { RefetchTokenParams, SendDataParams, Tokens } from "./types";
+import {
+  RefetchTokenParams,
+  SendDataParams,
+  SendDataWithoutAuthorizationParams,
+  Tokens,
+} from "./types";
 
 async function getDataFromFetch(url: string) {
   let result: unknown | Error;
@@ -30,43 +35,58 @@ async function refetchToken<T>({ cookies, res }: RefetchTokenParams) {
     return;
   }
 
-  const response = await fetch("https://dummyjson.com/auth/refresh", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      refreshToken: cookies.REFRESH_TOKEN,
-      expiresInMins: 30,
-    }),
-  });
+  try {
+    const response = await fetch("https://dummyjson.com/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refreshToken: cookies.REFRESH_TOKEN,
+        expiresInMins: 30,
+      }),
+    });
 
-  const newTokens = (await response.json()) as Tokens;
+    if (!response.ok) {
+      throw Error(`status: ${response.status} message: ${response.statusText}`);
+    }
 
-  return {
-    refreshToken: newTokens.refreshToken,
-    acessToken: newTokens.token,
-  };
+    const newTokens = (await response.json()) as Tokens;
+
+    console.log({ newTokens, response });
+    return {
+      refreshToken: newTokens.refreshToken,
+      acessToken: newTokens.token,
+    };
+  } catch (err) {
+    res.status(401).json("НАДА Авторизироваться");
+
+    return;
+  }
 }
 
 async function sendData<Data>(params: SendDataParams<Data>) {
   const { cookies, getData, res } = params;
 
+  //сделать валидацию не только на аксесс но и на валидность токена
   const isAuthorize = cookies && "ACCESS_TOKEN" in cookies;
 
   let access_token = cookies.ACCESS_TOKEN;
   let refresh_token = cookies.REFRESH_TOKEN;
 
+  console.log({ isAuthorize });
   if (!isAuthorize) {
     const newPairOfTokens = await refetchToken({
       res,
       cookies,
     });
 
-    if (newPairOfTokens) {
-      access_token = newPairOfTokens.acessToken;
-      refresh_token = newPairOfTokens.refreshToken;
+    if (!newPairOfTokens) {
+      return;
     }
+
+    access_token = newPairOfTokens.acessToken;
+    refresh_token = newPairOfTokens.refreshToken;
   }
 
   const json = await getData();
@@ -86,4 +106,24 @@ async function sendData<Data>(params: SendDataParams<Data>) {
     .json(json);
 }
 
-export { refetchToken, sendData, typeGuard, getDataFromFetch };
+async function sendDataWithoutAuthorization<Data>(
+  params: SendDataWithoutAuthorizationParams<Data>
+) {
+  const { getData, res } = params;
+
+  try {
+    const json = await getData();
+
+    res.status(200).json(json);
+  } catch (err) {
+    res.status(400);
+  }
+}
+
+export {
+  refetchToken,
+  sendData,
+  typeGuard,
+  getDataFromFetch,
+  sendDataWithoutAuthorization,
+};

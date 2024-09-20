@@ -1,8 +1,13 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { Post, Profile, Tokens } from "./types";
-import { getDataFromFetch, sendData, typeGuard } from "./helpers";
+import { Post, Profile } from "./types";
+import {
+  getDataFromFetch,
+  sendData,
+  sendDataWithoutAuthorization,
+  typeGuard,
+} from "./helpers";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
 
 const app = express();
@@ -29,48 +34,12 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
-app.get("/set-cookie", (req, res) => {
-  res.cookie("myCookie", "cookieValue", {
-    httpOnly: true,
-    sameSite: "none",
-    secure: false,
-  });
-
-  const cookie = req.cookies;
-  const headers = req.headers.cookie;
-
-  // console.log({ cookie, headers });
-
-  res
-    .cookie(ACCESS_TOKEN, ACCESS_TOKEN, {
-      // maxAge: 60 * 60 * 24 * 7, // 1 неделя
-      maxAge: 6_000, // 1 неделя
-      httpOnly: true,
-      secure: false,
-    })
-    .cookie(REFRESH_TOKEN, REFRESH_TOKEN, {
-      // maxAge: 60 * 60 * 24 * 7, // 1 неделя
-      maxAge: 60 * 60 * 24 * 7,
-      httpOnly: true,
-      secure: false,
-    })
-    .status(200);
-
-  res.send("Cookie has been set");
-});
-
 // list of posts
 app.get("/posts", async (req, res: express.Response) => {
-  const { cookies } = req;
-
   const getPosts = async () =>
     await getDataFromFetch("https://jsonplaceholder.typicode.com/posts");
 
-  sendData<Post[]>({
-    getData: getPosts as () => Promise<Post[]>,
-    res,
-    cookies,
-  });
+  sendDataWithoutAuthorization({ getData: getPosts, res });
 });
 
 // current post

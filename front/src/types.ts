@@ -1,4 +1,4 @@
-export interface Profile {
+export interface ProfileType {
   email: string;
   firstName: string;
   gender: string;
@@ -8,4 +8,11 @@ export interface Profile {
   refreshToken: string;
   token: string;
   username: string;
+}
+
+export interface Post {
+  userId: number;
+  id: number;
+  title: string;
+  body: string;
 }

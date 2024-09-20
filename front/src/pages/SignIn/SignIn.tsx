@@ -1,7 +1,7 @@
 import { useState } from "react";
 import styles from "./styles.module.css";
 import { useNavigate } from "react-router-dom";
-import { Profile } from "../../types";
+import { ProfileType } from "../../types";
 
 export const SignIn = () => {
   const [login, setLogin] = useState("");
@@ -35,7 +35,7 @@ export const SignIn = () => {
 
         return resp.json();
       })
-      .then((data: Profile) => {
+      .then((data: ProfileType) => {
         console.log(" success =====>", { data });
 
         localStorage.setItem("user", JSON.stringify(data));

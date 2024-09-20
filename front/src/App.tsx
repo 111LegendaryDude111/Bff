@@ -1,6 +1,6 @@
 import "./App.css";
 import { useNavigate } from "react-router-dom";
-import { Profile } from "./types";
+import { ProfileType } from "./types";
 import { PostsList } from "./widgets/Posts/Posts";
 /*
   Страницы:
@@ -23,7 +23,7 @@ function App() {
       return;
     }
 
-    const user: Profile = JSON.parse(userFromLs);
+    const user: ProfileType = JSON.parse(userFromLs);
 
     const res = await fetch("http://localhost:3000/posts", {
       headers: {
@@ -61,7 +61,7 @@ function App() {
       return;
     }
 
-    const user: Profile = JSON.parse(userFromLs);
+    const user: ProfileType = JSON.parse(userFromLs);
 
     const res = await fetch(`http://localhost:3000/posts/${5}`, {
       headers: {
@@ -82,15 +82,27 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col justify-center w-full">
-      This Main App
-      <div className="flex justify-center gap-10">
-        <button onClick={setCookie}>Set Cookie</button>
-        <button onClick={getPosts}>getPosts</button>
-        <button onClick={getCurrentPost}>getCurrentPost</button>
+    <div>
+      <header className="border border-emerald-700 flex justify-end">
+        <div
+          onClick={() => {
+            navigate("/profile");
+          }}
+        >
+          Profile
+        </div>
+      </header>
+
+      <div className="flex flex-col justify-center w-full">
+        This Main App
+        <div className="flex justify-center gap-10">
+          <button onClick={setCookie}>Set Cookie</button>
+          <button onClick={getPosts}>getPosts</button>
+          <button onClick={getCurrentPost}>getCurrentPost</button>
+        </div>
+        <hr />
+        <PostsList />
       </div>
-      <hr />
-      <PostsList />
     </div>
   );
 }

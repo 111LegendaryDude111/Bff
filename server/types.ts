@@ -35,4 +35,16 @@ interface SendDataParams<Data> {
   res: Response<any, Record<string, any>>;
 }
 
-export type { RefetchTokenParams, SendDataParams, Profile, Post, Tokens };
+interface SendDataWithoutAuthorizationParams<Data> {
+  getData: () => Promise<Data>;
+  res: Response<any, Record<string, any>>;
+}
+
+export type {
+  RefetchTokenParams,
+  SendDataParams,
+  Profile,
+  Post,
+  Tokens,
+  SendDataWithoutAuthorizationParams,
+};
