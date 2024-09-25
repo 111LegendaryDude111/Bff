@@ -90,7 +90,8 @@ app.post("/login", async (req, res: express.Response) => {
 
   const data = (await response.json()) as Profile;
 
-  const isSuccess = typeGuard("token", data) && typeGuard("refreshToken", data);
+  const isSuccess =
+    typeGuard("accessToken", data) && typeGuard("refreshToken", data);
 
   if (isSuccess) {
     res

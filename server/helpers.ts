@@ -27,7 +27,7 @@ function typeGuard<Field extends string, Object extends {}>(
   return field in obj;
 }
 
-async function refetchToken<T>({ cookies, res }: RefetchTokenParams) {
+async function refetchToken({ cookies, res }: RefetchTokenParams) {
   const shouldRedirectToLoginPage = !("REFRESH_TOKEN" in cookies);
 
   if (shouldRedirectToLoginPage) {
@@ -80,6 +80,8 @@ async function sendData<Data>(params: SendDataParams<Data>) {
       res,
       cookies,
     });
+
+    console.log({ newPairOfTokens });
 
     if (!newPairOfTokens) {
       return;
