@@ -95,7 +95,7 @@ app.post("/login", async (req, res: express.Response) => {
 
   if (isSuccess) {
     res
-      .cookie(ACCESS_TOKEN, data.token, {
+      .cookie(ACCESS_TOKEN, data.accessToken, {
         maxAge: 6_000,
         httpOnly: true,
         secure: false,
@@ -117,51 +117,6 @@ app.post("/login", async (req, res: express.Response) => {
 /*
      username: 'emilys',
     password: 'emilyspass',
-*/
 
-/*
-
-    {
-    "id": 1,
-    "username": "emilys",
-    "email": "emily.johnson@x.dummyjson.com",
-    "firstName": "Emily",
-    "lastName": "Johnson",
-    "gender": "female",
-    "image": "https://dummyjson.com/icon/emilys/128",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3MjIyODc0NDEsImV4cCI6MTcyMjI4OTI0MX0.VL_vMqD9-BzpXddeAwl3QIXKk7VIM8RXFSzmH9lGigQ",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3MjIyODc0NDEsImV4cCI6MTcyNDg3OTQ0MX0.l_MznGdy-NrX4_mmeyHY0ZzoQlnPlgbdGCh-Ifh0zgg"
-}
-
-
-
-!! Login user and get token
-
-
-  fetch('https://dummyjson.com/auth/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    username: 'emilys',
-    password: 'emilyspass',
-    expiresInMins: 30, // optional, defaults to 60
-  })
-  })
-    .then(res => res.json())
-    .then(console.log);
-
-
-  !! REFRESH
-fetch('https://dummyjson.com/auth/refresh', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        refreshToken: ' YOUR_REFRESH_TOKEN_HERE ',
-        expiresInMins: 30,
-        optional, defaults to 60
-    })
-}).then(res=>res.json()).then(console.log);
-
+    https://dummyjson.com/docs/users
 */

@@ -8,7 +8,7 @@ interface Profile {
   image: string;
   lastName: string;
   refreshToken: string;
-  token: string;
+  accessToken: string;
   username: string;
 }
 
@@ -20,7 +20,7 @@ interface Post {
 }
 
 interface Tokens {
-  token: string;
+  accessToken: string;
   refreshToken: string;
 }
 
