@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Post, ProfileType } from "../../types";
+import { ProfileType, Post } from "./types";
 
 export const Profile = () => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export const Profile = () => {
     const userFromLs = localStorage.getItem("user");
 
     if (!userFromLs) {
-      navigate("/login");
+      // navigate("/login");
 
       return;
     }

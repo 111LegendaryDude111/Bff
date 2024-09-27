@@ -3,7 +3,9 @@ import App from "./App.tsx";
 import "./index.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { SignIn } from "./pages/SignIn/SignIn.tsx";
-import { Profile } from "./pages/Profile/index.ts";
+
+//@ts-ignore
+import { Profile } from "remoteApp/Profile";
 
 const router = createBrowserRouter([
   {

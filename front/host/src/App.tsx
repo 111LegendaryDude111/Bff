@@ -43,14 +43,14 @@ function App() {
     console.log(data);
   };
 
-  const setCookie = () => {
-    fetch("http://localhost:3000/set-cookie", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((response) => console.log(response.data))
-      .catch((error) => console.error("Error:", error));
-  };
+  // const setCookie = () => {
+  //   fetch("http://localhost:3000/set-cookie", {
+  //     method: "GET",
+  //     credentials: "include",
+  //   })
+  //     .then((response) => console.log(response?.data))
+  //     .catch((error) => console.error("Error:", error));
+  // };
 
   const getCurrentPost = async () => {
     const userFromLs = localStorage.getItem("user");
@@ -96,7 +96,7 @@ function App() {
       <div className="flex flex-col justify-center w-full">
         This Main App
         <div className="flex justify-center gap-10">
-          <button onClick={setCookie}>Set Cookie</button>
+          {/* <button onClick={setCookie}>Set Cookie</button> */}
           <button onClick={getPosts}>getPosts</button>
           <button onClick={getCurrentPost}>getCurrentPost</button>
         </div>
