@@ -75,6 +75,7 @@ export const SignIn = () => {
               value={login}
               onChange={(e) => setLogin(e.target.value)}
               className={styles.input}
+              name="login"
             />
           </label>
           <label className={styles.label}>
@@ -83,6 +84,7 @@ export const SignIn = () => {
               className={styles.input}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              name="password"
             />
           </label>
 

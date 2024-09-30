@@ -10,7 +10,7 @@ export const Profile = () => {
     const userFromLs = localStorage.getItem("user");
 
     if (!userFromLs) {
-      // navigate("/login");
+      navigate("/login");
 
       return;
     }
