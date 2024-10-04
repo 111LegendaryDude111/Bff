@@ -6,18 +6,6 @@ import {
   Tokens,
 } from "./types";
 
-/*
-
-  Правки
-- добавить проверку на валидность юзера через 'https://dummyjson.com/auth/me'
-
-
-
-- микрофронты
-- личный кабинет подгружается отдельным микрофронтом
-- тесты - е2е
-*/
-
 async function getDataFromFetch(url: string) {
   let result: unknown | Error;
 
