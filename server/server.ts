@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Response, Request } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { Post, Profile } from "./types";
@@ -9,9 +9,14 @@ import {
   typeGuard,
 } from "./helpers";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
+import csurf from "csurf";
 
 const app = express();
 const port = 3000;
+
+const csrfProtection = csurf({
+  cookie: true, // Хранение CSRF токена в cookie
+});
 
 const jsonMiddleware = express.json();
 
@@ -24,10 +29,14 @@ app.use(cors(corsOptions));
 app.use(jsonMiddleware);
 app.use(cookieParser());
 
-// Маршрут для главной страницы
-app.get("/", (req, res: express.Response) => {
-  res.send("Hello");
-});
+// app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+//   if (err.code === "EBADCSRFTOKEN") {
+//     // Ошибка токена CSRFcs
+//     res.status(403).json({ message: "Invalid CSRF token" });
+//   } else {
+//     next(err);
+//   }
+// });
 
 // Запуск сервера
 app.listen(port, () => {
@@ -54,20 +63,25 @@ app.get("/posts/:id", async (req, res: express.Response) => {
 });
 
 // get user by id
-app.get("/usersPosts/:userId", async (req, res: express.Response) => {
-  const { params, cookies } = req;
+app.get(
+  "/usersPosts/:userId",
+  csrfProtection,
+  async (req, res: express.Response) => {
+    const { params, cookies } = req;
 
-  const getAllPost = async () =>
-    await getDataFromFetch(
-      `https://jsonplaceholder.typicode.com/posts?userId=${params.userId}`
-    );
+    const getAllPost = async () =>
+      await getDataFromFetch(
+        `https://jsonplaceholder.typicode.com/posts?userId=${params.userId}`
+      );
 
-  sendData<Post[]>({
-    getData: getAllPost as () => Promise<Post[]>,
-    res,
-    cookies,
-  });
-});
+    sendData<Post[]>({
+      getData: getAllPost as () => Promise<Post[]>,
+      res,
+      cookies,
+      req,
+    });
+  }
+);
 
 // Aвторизация
 app.post("/login", async (req, res: express.Response) => {
@@ -116,7 +130,7 @@ app.post("/login", async (req, res: express.Response) => {
 
 /*
      username: 'emilys',
-    password: 'emilyspass',
+     password: 'emilyspass',
 
     https://dummyjson.com/docs/users
 */

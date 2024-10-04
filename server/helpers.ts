@@ -78,28 +78,30 @@ async function refetchToken({ cookies, res }: RefetchTokenParams) {
 }
 
 async function sendData<Data>(params: SendDataParams<Data>) {
-  const { cookies, getData, res } = params;
+  const { cookies, getData, res, req } = params;
 
   let access_token = cookies.ACCESS_TOKEN;
   let refresh_token = cookies.REFRESH_TOKEN;
 
   const authorizeData = await checkIsAuthorize(cookies.ACCESS_TOKEN);
 
-  console.log({ authorizeData });
+  try {
+    if ("message" in authorizeData) {
+      const newPairOfTokens = await refetchToken({
+        res,
+        cookies,
+      });
 
-  if ("message" in authorizeData) {
-    const newPairOfTokens = await refetchToken({
-      res,
-      cookies,
-    });
+      if (!newPairOfTokens) {
+        throw Error("need access");
+      }
+      const { accessToken, refreshToken } = newPairOfTokens;
 
-    if (!newPairOfTokens) {
-      throw Error("need access");
+      access_token = accessToken;
+      refresh_token = refreshToken;
     }
-    const { accessToken, refreshToken } = newPairOfTokens;
-
-    access_token = accessToken;
-    refresh_token = refreshToken;
+  } catch (e) {
+    res.status(400).json(e);
   }
 
   try {
@@ -115,6 +117,11 @@ async function sendData<Data>(params: SendDataParams<Data>) {
         maxAge: 60 * 60 * 24 * 7, // 1 неделя
         httpOnly: true,
         secure: false,
+      })
+      .cookie("XSRF-TOKEN", req ? req?.csrfToken() : null, {
+        httpOnly: false,
+        secure: false,
+        sameSite: "strict",
       })
       .status(200)
       .json(json);

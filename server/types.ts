@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { Response, Request } from "express";
 
 interface Profile {
   email: string;
@@ -33,6 +33,7 @@ interface SendDataParams<Data> {
   cookies: any;
   getData: () => Promise<Data>;
   res: Response<any, Record<string, any>>;
+  req?: Request;
 }
 
 interface SendDataWithoutAuthorizationParams<Data> {
