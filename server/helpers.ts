@@ -90,6 +90,8 @@ async function sendData<Data>(params: SendDataParams<Data>) {
     }
   } catch (e) {
     res.status(400).json(e);
+
+    return;
   }
 
   try {
@@ -106,11 +108,17 @@ async function sendData<Data>(params: SendDataParams<Data>) {
         httpOnly: true,
         secure: false,
       })
-      .cookie("XSRF-TOKEN", req ? req?.csrfToken() : null, {
-        httpOnly: false,
-        secure: false,
-        sameSite: "strict",
-      })
+      .cookie(
+        "XSRF-TOKEN",
+        req && "csrfToken" in req && typeof req.csrfToken === "function"
+          ? req.csrfToken()
+          : null,
+        {
+          httpOnly: false,
+          secure: false,
+          sameSite: "strict",
+        }
+      )
       .status(200)
       .json(json);
   } catch (e) {
@@ -130,6 +138,8 @@ async function sendDataWithoutAuthorization<Data>(
   } catch (err) {
     res.status(400);
   }
+
+  return;
 }
 
 export {
@@ -150,7 +160,6 @@ async function checkIsAuthorize(token: string): Promise<RequestError | any> {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
-        // Pass JWT via Authorization header
       },
       credentials: "include", // Include cookies (e.g., accessToken) in the request
     });
