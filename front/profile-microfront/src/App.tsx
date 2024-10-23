@@ -10,12 +10,7 @@ function App() {
     nav("/profile");
   }, [nav]);
 
-  return (
-    <>
-      <>profile App</>
-      <Profile />
-    </>
-  );
+  return <Profile />;
 }
 
 export default App;

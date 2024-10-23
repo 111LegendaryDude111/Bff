@@ -16,11 +16,13 @@ export const Profile = () => {
     }
 
     const user: ProfileType = JSON.parse(userFromLs);
-
+    const xcsrf =
+      document.cookie.split(";").find((el) => el.includes("XSRF-TOKEN")) ?? "";
     fetch(`http://localhost:3000/usersPosts/${user.id}`, {
       headers: {
         accessToken: user.token,
         refreshToken: user.refreshToken,
+        ["X-CSRF"]: xcsrf,
       },
       credentials: "include",
     })

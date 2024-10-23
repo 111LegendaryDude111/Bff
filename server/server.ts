@@ -1,12 +1,12 @@
 import express, { NextFunction, Response, Request } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { Post, Profile } from "./types";
+import { Post, Profile, Tokens } from "./types";
 import {
+  checkIsAuthorize,
   getDataFromFetch,
-  sendData,
-  sendDataWithoutAuthorization,
   typeGuard,
+  refetchToken,
 } from "./helpers";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
 import csurf from "csurf";
@@ -29,37 +29,65 @@ app.use(cors(corsOptions));
 app.use(jsonMiddleware);
 app.use(cookieParser());
 
-// app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-//   if (err.code === "EBADCSRFTOKEN") {
-//     // Ошибка токена CSRFcs
-//     res.status(403).json({ message: "Invalid CSRF token" });
-//   } else {
-//     next(err);
-//   }
-// });
-
-// Запуск сервера
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
 // list of posts
 app.get("/posts", async (req, res: express.Response) => {
-  const getPosts = async () =>
-    await getDataFromFetch("https://jsonplaceholder.typicode.com/posts");
+  try {
+    const json = await getDataFromFetch(
+      "https://jsonplaceholder.typicode.com/posts"
+    );
 
-  sendDataWithoutAuthorization({ getData: getPosts, res });
+    res.status(200).json(json);
+  } catch (err) {
+    res.status(400);
+  }
 });
 
 // current post
 app.get("/posts/:id", async (req, res: express.Response) => {
   const { params, cookies } = req;
-  const getPost = async () =>
-    await getDataFromFetch(
+
+  let accessToken = cookies.ACCESS_TOKEN;
+  let refreshToken = cookies.REFRESH_TOKEN;
+
+  const isAuthorize = await checkIsAuthorize(cookies.ACCESS_TOKEN);
+
+  if (!isAuthorize) {
+    const newPairOfTokens = await refetchToken({ cookies });
+
+    if ("status" in newPairOfTokens) {
+      res.status(newPairOfTokens.status).json(newPairOfTokens.message);
+      return;
+    }
+
+    accessToken = newPairOfTokens.accessToken;
+    refreshToken = newPairOfTokens.refreshToken;
+  }
+
+  try {
+    const json = await getDataFromFetch(
       `https://jsonplaceholder.typicode.com/posts/${params.id}`
     );
 
-  sendData<Post>({ getData: getPost as () => Promise<Post>, res, cookies });
+    res
+      .cookie(ACCESS_TOKEN, accessToken, {
+        maxAge: 6_000,
+        httpOnly: true,
+        secure: false,
+      })
+      .cookie(REFRESH_TOKEN, refreshToken, {
+        maxAge: 60 * 60 * 24 * 7, // 1 неделя
+        httpOnly: true,
+        secure: false,
+      })
+      .status(200)
+      .json(json);
+  } catch (e) {
+    res.status(400).json(e);
+  }
 });
 
 // get user by id
@@ -69,17 +97,54 @@ app.get(
   async (req, res: express.Response) => {
     const { params, cookies } = req;
 
-    const getAllPost = async () =>
-      await getDataFromFetch(
+    let accessToken = cookies.ACCESS_TOKEN;
+    let refreshToken = cookies.REFRESH_TOKEN;
+
+    const isAuthorize = await checkIsAuthorize(cookies.ACCESS_TOKEN);
+
+    if (!isAuthorize) {
+      const newPairOfTokens = await refetchToken({ cookies });
+
+      if ("status" in newPairOfTokens) {
+        res.status(newPairOfTokens.status).json(newPairOfTokens.message);
+        return;
+      }
+
+      accessToken = newPairOfTokens.accessToken;
+      refreshToken = newPairOfTokens.refreshToken;
+    }
+
+    try {
+      const json = await getDataFromFetch(
         `https://jsonplaceholder.typicode.com/posts?userId=${params.userId}`
       );
 
-    sendData<Post[]>({
-      getData: getAllPost as () => Promise<Post[]>,
-      res,
-      cookies,
-      req,
-    });
+      const XSRF =
+        "csrfToken" in req && typeof req.csrfToken === "function"
+          ? req.csrfToken()
+          : null;
+
+      res
+        .cookie(ACCESS_TOKEN, accessToken, {
+          maxAge: 6_000,
+          httpOnly: true,
+          secure: false,
+        })
+        .cookie(REFRESH_TOKEN, refreshToken, {
+          maxAge: 60 * 60 * 24 * 7, // 1 неделя
+          httpOnly: true,
+          secure: false,
+        })
+        .cookie("XSRF-TOKEN", XSRF, {
+          httpOnly: false,
+          secure: false,
+          sameSite: "strict",
+        })
+        .status(200)
+        .json(json);
+    } catch (e) {
+      res.status(400).json(e);
+    }
   }
 );
 

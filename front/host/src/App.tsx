@@ -2,17 +2,15 @@ import "./App.css";
 import { useNavigate } from "react-router-dom";
 import { ProfileType } from "./types";
 import { PostsList } from "./widgets/Posts/Posts";
-/*
-  Страницы:
-      1) авторизация
-      2) посты
-      3) детальная карточка поста
-      4) профиль (личный кабинет )
-
-*/
 
 function App() {
   const navigate = useNavigate();
+
+  const xcrf = document.cookie
+    .split(";")
+    .find((el) => el.includes("XSRF-TOKEN"));
+
+  console.log({ xcrf });
 
   const getPosts = async () => {
     const userFromLs = localStorage.getItem("user");
@@ -25,10 +23,14 @@ function App() {
 
     const user: ProfileType = JSON.parse(userFromLs);
 
+    const xcsrf =
+      document.cookie.split(";").find((el) => el.includes("XSRF-TOKEN")) ?? "";
+
     const res = await fetch("http://localhost:3000/posts", {
       headers: {
         accessToken: user.token,
         refreshToken: user.refreshToken,
+        ["X-CSRF"]: xcsrf,
       },
       credentials: "include",
     });
@@ -42,15 +44,6 @@ function App() {
 
     console.log(data);
   };
-
-  // const setCookie = () => {
-  //   fetch("http://localhost:3000/set-cookie", {
-  //     method: "GET",
-  //     credentials: "include",
-  //   })
-  //     .then((response) => console.log(response?.data))
-  //     .catch((error) => console.error("Error:", error));
-  // };
 
   const getCurrentPost = async () => {
     const userFromLs = localStorage.getItem("user");
@@ -96,7 +89,6 @@ function App() {
       <div className="flex flex-col justify-center w-full">
         This Main App
         <div className="flex justify-center gap-10">
-          {/* <button onClick={setCookie}>Set Cookie</button> */}
           <button onClick={getPosts}>getPosts</button>
           <button onClick={getCurrentPost}>getCurrentPost</button>
         </div>
